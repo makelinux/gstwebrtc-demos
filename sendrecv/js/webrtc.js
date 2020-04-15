@@ -41,17 +41,14 @@ function handleIncomingError(error) {
 
 function setStatus(text) {
     console.log(text);
-    var span = document.getElementById("status")
-    // Don't set the status if it already contains an error
-    if (!span.classList.contains('error'))
-        span.textContent = text;
+    if (!state.classList.contains('error'))
+        state.textContent = text;
 }
 
 function setError(text) {
     console.error(text);
-    var span = document.getElementById("status")
-    span.textContent = text;
-    span.classList.add('error');
+    state.textContent = text;
+    state.classList.add('error');
 }
 
 function resetVideo() {
@@ -193,10 +190,8 @@ function websocketServerConnect() {
         setError("Too many connection attempts, aborting. Refresh page to try again");
         return;
     }
-    // Clear errors in the status span
-    var span = document.getElementById("status");
-    span.classList.remove('error');
-    span.textContent = '';
+    state.classList.remove('error');
+    state.textContent = '';
     // Populate constraints
     var textarea = document.getElementById('constraints');
     if (textarea.value == '')
