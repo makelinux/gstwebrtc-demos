@@ -165,20 +165,17 @@ function onServerError(event) {
 }
 
 function getCamera() {
-    var constraints;
-    var textarea = document.getElementById('constraints');
     try {
-        constraints = JSON.parse(textarea.value);
+         JSON.parse(constraints.value);
     } catch (e) {
         console.error(e);
         setError('ERROR parsing constraints: ' + e.message + ', using default constraints');
-        constraints = default_constraints;
+        constraints.value = JSON.stringify(default_constraints);
     }
-    console.log(JSON.stringify(constraints));
 
     // Add camera and mic
     if (navigator.mediaDevices.getUserMedia) {
-        return navigator.mediaDevices.getUserMedia(constraints);
+        return navigator.mediaDevices.getUserMedia(JSON.parse(constraints.value));
     } else {
         errorUserMediaHandler();
     }
@@ -193,9 +190,8 @@ function websocketServerConnect() {
     state.classList.remove('error');
     state.textContent = '';
     // Populate constraints
-    var textarea = document.getElementById('constraints');
-    if (textarea.value == '')
-        textarea.value = JSON.stringify(default_constraints);
+    if (constraints.value == '')
+        constraints.value = JSON.stringify(default_constraints);
     // Fetch the peer id to use
     peer_id = default_peer_id || getOurId();
     ws_port = ws_port || '8443';
@@ -241,8 +237,7 @@ const handleDataChannelMessageReceived = (event) =>{
     setStatus("Received data channel message");
     if (typeof event.data === 'string' || event.data instanceof String) {
         console.log('Incoming string message: ' + event.data);
-        textarea = document.getElementById("text")
-        textarea.value = textarea.value + '\n' + event.data
+        text.value = text.value + '\n' + event.data
     } else {
         console.log('Incoming data message');
     }
