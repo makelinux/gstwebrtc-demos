@@ -22,8 +22,8 @@ var connect_attempts = 0;
 var peer_connection;
 var send_channel;
 var ws_conn;
-// Promise for local stream after constraints are approved by the user
-var local_stream_promise;
+// Promise for camera after constraints are approved by the user
+var camera_promise;
 
 function getOurId() {
     return Math.floor(Math.random() * (9000 - 10) + 10).toString();
@@ -37,10 +37,6 @@ function resetState() {
 function handleIncomingError(error) {
     setError("ERROR: " + error);
     resetState();
-}
-
-function getVideoElement() {
-    return document.getElementById("stream");
 }
 
 function setStatus(text) {
@@ -60,18 +56,17 @@ function setError(text) {
 
 function resetVideo() {
     // Release the webcam and mic
-    if (local_stream_promise)
-        local_stream_promise.then(stream => {
-            if (stream) {
-                stream.getTracks().forEach(function (track) { track.stop(); });
+    if (typeof camera_promise !== 'undefined')
+        camera_promise.then(cam => {
+            if (cam) {
+                cam.getTracks().forEach(function (track) { track.stop(); });
             }
         });
 
     // Reset the video element and stop showing the last received frame
-    var videoElement = getVideoElement();
-    videoElement.pause();
-    videoElement.src = "";
-    videoElement.load();
+    video.pause();
+    video.src = "";
+    video.load();
 }
 
 // SDP offer received from peer, set remote description and create an answer
@@ -81,10 +76,10 @@ function onIncomingSDP(sdp) {
         if (sdp.type != "offer")
             return;
         setStatus("Got SDP offer");
-        local_stream_promise.then((stream) => {
-            setStatus("Got local stream, creating answer");
+        camera_promise.then((cam) => {
+            setStatus("Got camera and mic, creating answer");
             peer_connection.createAnswer()
-            .then(onLocalDescription).catch(setError);
+                .then(onLocalDescription).catch(setError);
         }).catch(setError);
     }).catch(setError);
 }
@@ -172,7 +167,7 @@ function onServerError(event) {
     window.setTimeout(websocketServerConnect, 3000);
 }
 
-function getLocalStream() {
+function getCamera() {
     var constraints;
     var textarea = document.getElementById('constraints');
     try {
@@ -184,7 +179,7 @@ function getLocalStream() {
     }
     console.log(JSON.stringify(constraints));
 
-    // Add local stream
+    // Add camera and mic
     if (navigator.mediaDevices.getUserMedia) {
         return navigator.mediaDevices.getUserMedia(constraints);
     } else {
@@ -231,9 +226,9 @@ function websocketServerConnect() {
 }
 
 function onRemoteTrack(event) {
-    if (getVideoElement().srcObject !== event.streams[0]) {
+    if (video.srcObject !== event.streams[0]) {
         console.log('Incoming stream');
-        getVideoElement().srcObject = event.streams[0];
+        video.srcObject = event.streams[0];
     }
 }
 
@@ -291,10 +286,10 @@ function createCall(msg) {
     peer_connection.ondatachannel = onDataChannel;
     peer_connection.ontrack = onRemoteTrack;
     /* Send our video/audio to the other peer */
-    local_stream_promise = getLocalStream().then((stream) => {
-        console.log('Adding local stream');
-        peer_connection.addStream(stream);
-        return stream;
+    camera_promise = getCamera().then((cam) => {
+        console.log('Adding camera and mic');
+        peer_connection.addStream(cam);
+        return cam;
     }).catch(setError);
 
     if (msg != null && !msg.sdp) {
@@ -314,5 +309,5 @@ function createCall(msg) {
     if (msg != null)
         setStatus("Created peer connection for call, waiting for SDP");
 
-    return local_stream_promise;
+    return camera_promise;
 }
