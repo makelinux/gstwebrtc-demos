@@ -25,6 +25,11 @@ var ws_conn;
 // Promise for camera after constraints are approved by the user
 var camera_promise;
 
+// explicitly declare DOM elements
+var constraints
+var state
+var text
+
 function getOurId() {
     return Math.floor(Math.random() * (9000 - 10) + 10).toString();
 }
@@ -166,12 +171,13 @@ function onServerError(event) {
 
 function getCamera() {
     try {
-         JSON.parse(constraints.value);
+         var just_check_parsing = JSON.parse(constraints.value);
     } catch (e) {
         console.error(e);
         setError('ERROR parsing constraints: ' + e.message + ', using default constraints');
         constraints.value = JSON.stringify(default_constraints);
     }
+    console.log(constraints.value)
 
     // Add camera and mic
     if (navigator.mediaDevices.getUserMedia) {
@@ -182,6 +188,9 @@ function getCamera() {
 }
 
 function websocketServerConnect() {
+    constraints = document.getElementById("constraints")
+    state = document.getElementById("state")
+    text = document.getElementById("text")
     connect_attempts++;
     if (connect_attempts > 3) {
         setError("Too many connection attempts, aborting. Refresh page to try again");
